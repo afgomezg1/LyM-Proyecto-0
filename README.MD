@@ -1,4 +1,4 @@
-P0 LENGUAJES Y MAQUINAS
+P0 Lenguajes y máquinas
 
-INTEGRANTES:
+Integrantes:
 Juan Miguel Manrique Cruz y Andrés Felipe Gómez García
