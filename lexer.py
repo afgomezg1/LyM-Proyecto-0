@@ -160,6 +160,12 @@ def t_NAME(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*' #TODO: Preguntar que reglas siguen los nombres
     return t
 
+# Define EOF token rule
+def t_eof(t):
+    r'\Z'
+    t.type = 'EOF'
+    return t
+
 # Error handling rule
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
@@ -212,5 +218,52 @@ data = '''
 data = data.lower()
 
 lexer.input(data)
-for token in lexer:
-    print(token)
+
+stack = []
+
+token_actual = None
+
+def parse():
+    global token_actual
+    global stack
+    token_actual = lexer.token().type
+    while token_actual != "EOF":
+        statement()
+    if len(stack) > 0:
+        print("Parentesis impares")
+    print("Final del archivo")
+    
+def statement():
+    global token_actual
+    global stack
+    if token_actual == "LPAREN":
+        #Siguiente token / funcion token_es_tipo
+        token_es_tipo("LPAREN")
+        #Parentesis iz en stack
+        stack.append("LPAREN")
+        statement()
+    elif token_actual == "RPAREN":
+        if len(stack) == 0:
+            print("No hay parentesis izq para emparejar el parentisis der")
+        else:
+            stack.pop()
+        token_es_tipo("RPAREN")
+    elif token_actual == "IF":
+        print("if statement")
+        token_es_tipo("IF")
+        pass
+    elif token_actual == "DEFVAR":
+        print("defvar statement")
+        token_es_tipo("DEFVAR")
+        pass
+    else:
+        print("otro")
+        token_actual = lexer.token().type
+        
+def token_es_tipo(token_type):
+    global token_actual
+    if token_actual == token_type:
+        token_actual = lexer.token().type
+    else:
+        print("Se esperaba un token tipo " + str(token_type) + " se obtuvo un token tipo " + str(token_actual))
+parse()
