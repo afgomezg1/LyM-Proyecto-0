@@ -1,4 +1,5 @@
 import ply.lex as lex
+import sys
 
 # List of token names
 tokens = [
@@ -219,6 +220,11 @@ data = data.lower()
 
 lexer.input(data)
 
+#Excepcion
+class InvalidSyntaxException(Exception):
+    "Lanzada si hay un error de syntax"
+    pass
+
 stack = []
 
 token_actual = None
@@ -227,40 +233,50 @@ def parse():
     global token_actual
     global stack
     token_actual = lexer.token()
-    while token_actual != "EOF":
-        statement()
-    if len(stack) > 0:
-        print("Parentesis impares")
-    print("Final del archivo")
+    try:
+        while token_actual != "EOF":
+            statement()
+        if len(stack) > 0:
+            print("Parentesis impares")
+            raise InvalidSyntaxException
+        print("Final del archivo")
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
     
 def statement():
     global token_actual
     global stack
     
-    if token_actual.type == "LPAREN":
-        #Siguiente token / funcion token_es_tipo
-        token_es_tipo("LPAREN")
-        #Parentesis iz en stack
-        stack.append("LPAREN")
-        statement()
-    elif token_actual.type == "RPAREN":
-        if len(stack) == 0:
-            print("No hay parentesis izq para emparejar el parentisis der")
+    try:
+        if token_actual.type == "LPAREN":
+            #Siguiente token / funcion token_es_tipo
+            token_es_tipo("LPAREN")
+            #Parentesis iz en stack
+            stack.append("LPAREN")
+            statement()
+        elif token_actual.type == "RPAREN":
+            if len(stack) == 0:
+                print("No hay parentesis izq para emparejar el parentisis der")
+                raise InvalidSyntaxException
+            else:
+                stack.pop()
+            token_es_tipo("RPAREN")
+        elif token_actual.type == "IF":
+            print("if statement")
+            token_es_tipo("IF")
+            verificarIf()
+            pass
+        elif token_actual.type == "DEFVAR":
+            print("defvar statement")
+            token_es_tipo("DEFVAR")
+            pass
         else:
-            stack.pop()
-        token_es_tipo("RPAREN")
-    elif token_actual.type == "IF":
-        print("if statement")
-        token_es_tipo("IF")
-        verificarIf()
-        pass
-    elif token_actual.type == "DEFVAR":
-        print("defvar statement")
-        token_es_tipo("DEFVAR")
-        pass
-    else:
-        print("otro")
-        token_actual = lexer.token()
+            print("otro")
+            token_actual = lexer.token()
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
         
 def token_es_tipo(token_type):
     global token_actual
@@ -274,71 +290,85 @@ def verificarIf():
     global token_actual
     global stack
     condiciones = ["FACING", "BLOCKED", "CANPUT", "CANPICK", "CANMOVE", "ISZERO"]
-    while len(stack) > 0:
-        if token_actual.type == "LPAREN":
-        #Siguiente token / funcion token_es_tipo
-            token_es_tipo("LPAREN")
-        #Parentesis iz en stack
-            stack.append("LPAREN")
-            verificarIf()
-        elif token_actual.type == "RPAREN":
-            if len(stack) == 0:
-                print("No hay parentesis izq para emparejar el parentisis der")
-            else:
-                stack.pop()
-            token_es_tipo("RPAREN")
-        elif token_actual.type == "FACING":
-            token_es_tipo("FACING")
-            if token_actual.type == "ORIENTATION":
-                token_es_tipo("ORIENTATION")
+    try:    
+        while len(stack) > 0:
+            if token_actual.type == "LPAREN":
+            #Siguiente token / funcion token_es_tipo
+                token_es_tipo("LPAREN")
+            #Parentesis iz en stack
+                stack.append("LPAREN")
                 verificarIf()
-            else:
-                #TODO Excepcion aquí
-                print("No es de tipo ORIENTATION")
-        elif token_actual.type == "BLOCKED":
-            token_es_tipo("BLOCKED")
-            verificarIf()
-        elif token_actual.type == "CANPUT":
-            token_es_tipo("CANPUT")
-            if token_actual.type == "ITEM":
-                token_es_tipo("ITEM")
+            elif token_actual.type == "RPAREN":
+                if len(stack) == 0:
+                    print("No hay parentesis izq para emparejar el parentisis der")
+                    raise InvalidSyntaxException
+                else:
+                    stack.pop()
+                token_es_tipo("RPAREN")
+            elif token_actual.type == "FACING":
+                token_es_tipo("FACING")
+                if token_actual.type == "ORIENTATION":
+                    token_es_tipo("ORIENTATION")
+                    verificarIf()
+                else:
+                    #TODO Excepcion aquí
+                    print("No es de tipo ORIENTATION")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "BLOCKED":
+                token_es_tipo("BLOCKED")
+                verificarIf()
+            elif token_actual.type == "CANPUT":
+                token_es_tipo("CANPUT")
+                if token_actual.type == "ITEM":
+                    token_es_tipo("ITEM")
+                    #TODO El token puede ser variable, la variable debe estar declarada
+                    if token_actual.type == "NUMBER":
+                        token_es_tipo("NUMBER")
+                    else:
+                        #TODO Excepcion aquí
+                        print("No es de tipo NUMBER")
+                        raise InvalidSyntaxException
+                else:
+                    #TODO Excepcion aquí
+                    print("No es de tipo ITEM")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "CANPICK":
+                token_es_tipo("CANPICK")
+                if token_actual.type == "ITEM":
+                    token_es_tipo("ITEM")
+                    #TODO El token puede ser variable, la variable debe estar declarada
+                    if token_actual.type == "NUMBER":
+                        token_es_tipo("NUMBER")
+                    else:
+                        #TODO Excepcion aquí
+                        print("No es de tipo NUMBER")
+                        raise InvalidSyntaxException
+                else:
+                    #TODO Excepcon aqui
+                    print("No es de tipo ITEM")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "CANMOVE":
+                token_es_tipo("CANMOVE")
+                if token_actual.type == "ORIENTATION":
+                    token_es_tipo("ORIENTATION")
+                else:
+                    #TODO Excepcion aquí
+                    print("No es de tipo ORIENTATION")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "ISZERO":
+                token_es_tipo("ISZERO")
                 #TODO El token puede ser variable, la variable debe estar declarada
                 if token_actual.type == "NUMBER":
                     token_es_tipo("NUMBER")
+            elif token_actual.type == "NOT":
+                if token_actual.type in condiciones:
+                    token_actual = lexer.token()
                 else:
-                    #TODO Excepcion aquí
-                    print("No es de tipo NUMBER")
-            else:
-                #TODO Excepcion aquí
-                print("No es de tipo ITEM")
-        elif token_actual.type == "CANPICK":
-            token_es_tipo("CANPICK")
-            if token_actual.type == "ITEM":
-                token_es_tipo("ITEM")
-                #TODO El token puede ser variable, la variable debe estar declarada
-                if token_actual.type == "NUMBER":
-                    token_es_tipo("NUMBER")
-                else:
-                    #TODO Excepcion aquí
-                    print("No es de tipo NUMBER")
-            else:
-                #TODO Excepcon aqui
-                print("No es de tipo ITEM")
-        elif token_actual.type == "CANMOVE":
-            token_es_tipo("CANMOVE")
-            if token_actual.type == "ORIENTATION":
-                token_es_tipo("ORIENTATION")
-            else:
-                #TODO Excepcion aquí
-                print("No es de tipo ORIENTATION")
-        elif token_actual.type == "ISZERO":
-            token_es_tipo("ISZERO")
-            #TODO El token puede ser variable, la variable debe estar declarada
-            if token_actual.type == "NUMBER":
-                token_es_tipo("NUMBER")
-        elif token_actual.type == "NOT":
-            if token_actual.type in condiciones:
-                token_actual = lexer.token()
+                    print("La condición no es válida")
+                    raise InvalidSyntaxException
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
             
 
 
