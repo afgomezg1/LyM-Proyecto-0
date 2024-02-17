@@ -280,10 +280,15 @@ def statement():
         
 def token_es_tipo(token_type):
     global token_actual
-    if token_actual.type == token_type:
-        token_actual = lexer.token()
-    else:
-        print("Se esperaba un token tipo " + str(token_type) + " se obtuvo un token tipo " + str(token_actual.type))
+    try:
+        if token_actual.type == token_type:
+            token_actual = lexer.token()
+        else:
+            print("Se esperaba un token tipo " + str(token_type) + " se obtuvo un token tipo " + str(token_actual.type))
+            raise InvalidSyntaxException
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
 
 
 def verificarIf():
@@ -309,7 +314,8 @@ def verificarIf():
                 token_es_tipo("FACING")
                 if token_actual.type == "ORIENTATION":
                     token_es_tipo("ORIENTATION")
-                    verificarIf()
+                    #verificarIf()
+                    verificarBloque()
                 else:
                     #TODO Excepcion aquí
                     print("No es de tipo ORIENTATION")
@@ -351,6 +357,7 @@ def verificarIf():
                 token_es_tipo("CANMOVE")
                 if token_actual.type == "ORIENTATION":
                     token_es_tipo("ORIENTATION")
+                    verificarBloque()
                 else:
                     #TODO Excepcion aquí
                     print("No es de tipo ORIENTATION")
@@ -361,14 +368,43 @@ def verificarIf():
                 if token_actual.type == "NUMBER":
                     token_es_tipo("NUMBER")
             elif token_actual.type == "NOT":
-                if token_actual.type in condiciones:
-                    token_actual = lexer.token()
+                token_es_tipo("NOT")
+                #Revisar condición
+                if token_actual.type == "LPAREN":
+                    token_es_tipo("LPAREN")
+                    if token_actual.type in condiciones:
+                        token_es_tipo(token_actual.type)
+                    if token_actual.type == "RPAREN"
                 else:
                     print("La condición no es válida")
                     raise InvalidSyntaxException
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
+        
+def verificarNot():
+    pass
+
+def verificarBloque():
+    global token_actual
+    global stack
+    try:
+        while len(stack) > 0:
+            if token_actual.type == "LPAREN":
+                token_es_tipo("LPAREN")
+                stack.append("LPAREN")
+                verificarBloque()
+            elif token_actual.type == "RPAREN":
+                if len(stack) == 0:
+                    print("No hay parentesis iz para emparejar el parentesis der")
+                    raise InvalidSyntaxException
+                else:
+                    stack.pop()
+                token_es_tipo("RPAREN")
+            else:
+                token_actual = lexer.token()
+    except InvalidSyntaxException:
+        print("No")
             
 
 
