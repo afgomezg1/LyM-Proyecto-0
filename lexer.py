@@ -1,3 +1,4 @@
+import token
 import ply.lex as lex
 import sys
 
@@ -137,8 +138,7 @@ def t_NOT(t):
     return t
 
 def t_DIRECTION(t):
-    #TODO: Solo en el programa ejemplo incluyen up y down, toca preguntar si se incluyen
-    r':(left|right|around|front|back|up|down)\b'
+    r':(left|right|around|front|back)\b'
     return t
 
 def t_ORIENTATION(t):
@@ -158,7 +158,7 @@ def t_NUMBER(t):
     return t
 
 def t_NAME(t):
-    r'[a-zA-Z_][a-zA-Z_0-9]*' #TODO: Preguntar que reglas siguen los nombres
+    r'[a-z][a-z0-9]*' #TODO: Cambiar la expresión regular a lo que dijo la monitora
     return t
 
 # Define EOF token rule
@@ -176,14 +176,15 @@ def t_error(t):
 lexer = lex.lex()
 
 # Test the lexer
+#TODO: Cambiar :front del primer move-dir por :north (así es originalmente en el ejemplo); se preguntó a la monitora sobre la inconsistencia
 data = '''
 ( defvar rotate 3)
 
 
 
 
-( if (can-move? :north ) ( move-dir 1 :north ) ( null ) )
- 
+( if (can-move? :north ) ( move-dir 1 :front ) ( null ) )
+
 (
 ( if (not (blocked?)) ( move 1) ( null) )
 (turn :left )
@@ -196,7 +197,7 @@ data = '''
 	(put :balloons p )
 	( move rotate ) )
 ( foo 1 3)
- 
+
 ( defun goend ()
 	( if (not (blocked?) )
 	(( move one )
@@ -212,7 +213,7 @@ data = '''
 )
 
 
-( run-dirs :left :up :left :down :right )
+( run-dirs :left :front :left :back :right )
 
 '''
 
@@ -229,6 +230,8 @@ stack = []
 
 token_actual = None
 
+lista_variables = []
+
 def parse():
     global token_actual
     global stack
@@ -243,11 +246,11 @@ def parse():
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
-    
+
 def statement():
     global token_actual
     global stack
-    
+
     try:
         if token_actual.type == "LPAREN":
             #Siguiente token / funcion token_es_tipo
@@ -262,6 +265,42 @@ def statement():
             else:
                 stack.pop()
             token_es_tipo("RPAREN")
+        elif token_actual.type == "DEFVAR":
+            print("defvar statement")
+            verificar_defvar()
+        elif token_actual.type == "ASSIGN":
+            print("assign statement")
+            verificar_assign()
+        elif token_actual.type == "MOVE":
+            print("move statement")
+            verificar_move()
+        elif token_actual.type == "SKIP":
+            print("skip statement")
+            verificar_skip()
+        elif token_actual.type == "TURN":
+            print("turn statement")
+            verificar_turn()
+        elif token_actual.type == "FACE":
+            print("face statement")
+            verificar_face()
+        elif token_actual.type == "PUT":
+            print("put statement")
+            verificar_put()
+        elif token_actual.type == "PICK":
+            print("pick statement")
+            verificar_pick()
+        elif token_actual.type == "MOVEDIR":
+            print("movedir statement")
+            verificar_movedir()
+        elif token_actual.type == "RUNDIRS":
+            print("rundirs statement")
+            verificar_rundirs()
+        elif token_actual.type == "MOVEFACE":
+            print("moveface statement")
+            verificar_moveface()
+        elif token_actual.type == "NULL":
+            print("null statement")
+            verificar_null()
         elif token_actual.type == "IF":
             print("if statement")
             token_es_tipo("IF")
@@ -277,7 +316,7 @@ def statement():
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
-        
+
 def token_es_tipo(token_type):
     global token_actual
     try:
@@ -289,14 +328,166 @@ def token_es_tipo(token_type):
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
+#TODO: Toca modificar los condicionales con tipo "NAME" para tener en cuenta las declaraciones de funciones
+def verificar_defvar():
+    global lista_variables
+    try:
+        token_es_tipo("DEFVAR")
+        if token_actual.value in lista_variables:
+            raise InvalidSyntaxException
+        nombre_variable = token_actual.value
+        token_es_tipo("NAME")
+        tipo_n = token_actual.type
+        if not (tipo_n == "NUMBER" or tipo_n == "CONSTANT"):
+            raise InvalidSyntaxException
+        token_es_tipo(tipo_n)
+        lista_variables.append(nombre_variable)
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
 
+def verificar_assign():
+    try:
+        token_es_tipo("ASSIGN")
+        if token_actual.value not in lista_variables:
+            raise InvalidSyntaxException
+        token_es_tipo("NAME")
+        tipo_n = token_actual.type
+        if not (tipo_n == "NUMBER" or tipo_n == "CONSTANT"):
+            raise InvalidSyntaxException
+        token_es_tipo(tipo_n)
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_move():
+    try:
+        token_es_tipo("MOVE")
+        tipo_n = token_actual.type
+        if not (tipo_n == "NUMBER" or tipo_n == "CONSTANT" or tipo_n == "NAME"):
+            raise InvalidSyntaxException
+        if (tipo_n == "NAME") and (token_actual.value not in lista_variables):
+            raise InvalidSyntaxException
+        token_es_tipo(tipo_n)
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_skip():
+    try:
+        token_es_tipo("SKIP")
+        tipo_n = token_actual.type
+        if not (tipo_n == "NUMBER" or tipo_n == "CONSTANT" or tipo_n == "NAME"):
+            raise InvalidSyntaxException
+        if (tipo_n == "NAME") and (token_actual.value not in lista_variables):
+            raise InvalidSyntaxException
+        token_es_tipo(tipo_n)
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_turn():
+    try:
+        token_es_tipo("TURN")
+        if token_actual.value not in [":left", ":right", ":around"]:
+            raise InvalidSyntaxException
+        token_es_tipo("DIRECTION")
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_face():
+    try:
+        token_es_tipo("FACE")
+        token_es_tipo("ORIENTATION")
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_put():
+    try:
+        token_es_tipo("PUT")
+        token_es_tipo("ITEM")
+        tipo_n = token_actual.type
+        if not (tipo_n == "NUMBER" or tipo_n == "NAME"):
+            print("if1")
+            raise InvalidSyntaxException
+        # if (tipo_n == "NAME") and (token_actual.value not in lista_variables): #TODO: Esto es lo mismo que lo de que se necesita tener en cuenta la declaración de funciones
+            print("if2")
+            raise InvalidSyntaxException
+        token_es_tipo(tipo_n)
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_pick():
+    try:
+        token_es_tipo("PICK")
+        token_es_tipo("ITEM")
+        tipo_n = token_actual.type
+        # if not (tipo_n == "NUMBER" or tipo_n == "NAME"):
+            # raise InvalidSyntaxException
+        # if (tipo_n == "NAME") and (token_actual.value not in lista_variables): #TODO: Pick es diferente en el ejemplo (se preguntó a la monitora sobre la inconsistencia)
+            # raise InvalidSyntaxException
+        token_es_tipo(tipo_n)
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_movedir():
+    try:
+        token_es_tipo("MOVEDIR")
+        tipo_n = token_actual.type
+        if not (tipo_n == "NUMBER" or tipo_n == "NAME"):
+            raise InvalidSyntaxException
+        if (tipo_n == "NAME") and (token_actual.value not in lista_variables):
+            raise InvalidSyntaxException
+        token_es_tipo(tipo_n)
+        if token_actual.value not in [":front", ":right", ":left", ":back"]:
+            raise InvalidSyntaxException
+        token_es_tipo("DIRECTION")
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_rundirs():
+    try:
+        token_es_tipo("RUNDIRS")
+        if token_actual.type != "DIRECTION":#TODO: Cambiar dependiendo de como se ve la lista de direcciones
+            raise InvalidSyntaxException
+        while token_actual.type == "DIRECTION":
+            token_es_tipo("DIRECTION")
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_moveface():
+    try:
+        token_es_tipo("MOVEFACE")
+        tipo_n = token_actual.type
+        if not (tipo_n == "NUMBER" or tipo_n == "NAME"):
+            raise InvalidSyntaxException
+        if (tipo_n == "NAME") and (token_actual.value not in lista_variables):
+            raise InvalidSyntaxException
+        token_es_tipo(tipo_n)
+        token_es_tipo("ORIENTATION")
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificar_null():
+    try:
+        token_es_tipo("NULL")
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
 
 def verificarIf():
     global token_actual
     global stack
     #condiciones = ["FACING", "BLOCKED", "CANPUT", "CANPICK", "CANMOVE", "ISZERO"]
-    try:    
-        while len(stack) > 0:
+    try:
+        while len(stack) > 0 and token_actual.type != "EOF":
             if token_actual.type == "LPAREN":
             #Siguiente token / funcion token_es_tipo
                 token_es_tipo("LPAREN")
@@ -384,7 +575,7 @@ def verificarIf():
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
-        
+
 def verificarNot():
     pass
 
@@ -392,7 +583,7 @@ def verificarBloque():
     global token_actual
     global stack
     try:
-        while len(stack) > 0:
+        while len(stack) > 0 and token_actual.type != "EOF":
             if token_actual.type == "LPAREN":
                 token_es_tipo("LPAREN")
                 stack.append("LPAREN")
@@ -408,12 +599,11 @@ def verificarBloque():
                 statement()
     except InvalidSyntaxException:
         print("No")
-            
 
 
 
+print("Inicia el parseo")
 parse()
 print("Si")
 
 
-    
