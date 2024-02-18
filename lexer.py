@@ -305,13 +305,28 @@ def statement(funcion=None):
         elif token_actual.type == "IF":
             print("if statement")
             token_es_tipo("IF")
+            if token_actual.type != "LPAREN":
+                    raise InvalidSyntaxException
             verificarIf()
         elif token_actual.type == "DEFUN":
             print("defun statement")
             verificar_defun(funcion)
+        elif token_actual.type == "LOOP":
+            print("Loop statement")
+            token_es_tipo("LOOP")
+            if token_actual.type != "LPAREN":
+                    raise InvalidSyntaxException
+            verificarLoop()
+        elif token_actual.type == "REPEAT":
+            print("Repeat statement")
+            token_es_tipo("REPEAT")
+            verificarRepeat()
+        elif token_actual.type == "NAME":
+            if token_actual.value in diccionario_funciones.keys():
+                print("FunCall statement")
+                verificarCallFun()
         else:
-            print("otro")
-            token_actual = lexer.token()
+            raise InvalidSyntaxException
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
@@ -502,7 +517,7 @@ def verificar_null():
 def verificarIf():
     global token_actual
     global stack
-    #condiciones = ["FACING", "BLOCKED", "CANPUT", "CANPICK", "CANMOVE", "ISZERO"]
+    global lista_variables
     try:
         while len(stack) > 0 and token_actual.type != "EOF":
             if token_actual.type == "LPAREN":
@@ -522,43 +537,49 @@ def verificarIf():
                 token_es_tipo("FACING")
                 if token_actual.type == "ORIENTATION":
                     token_es_tipo("ORIENTATION")
-                    #verificarIf()
                     verificarBloque()
                 else:
-                    #TODO Excepcion aquí
                     print("No es de tipo ORIENTATION")
                     raise InvalidSyntaxException
             elif token_actual.type == "BLOCKED":
                 token_es_tipo("BLOCKED")
-                verificarIf()
+                verificarBloque()
             elif token_actual.type == "CANPUT":
                 token_es_tipo("CANPUT")
                 if token_actual.type == "ITEM":
                     token_es_tipo("ITEM")
-                    #TODO El token puede ser variable, la variable debe estar declarada
                     if token_actual.type == "NUMBER":
                         token_es_tipo("NUMBER")
+                    elif token_actual.type == "NAME":
+                        if token_actual.value in lista_variables:
+                            token_es_tipo("NAME")
+                        else:
+                            raise InvalidSyntaxException
+                    elif token_actual.type == "CONSTANT":
+                        token_es_tipo("CONSTANT")
                     else:
-                        #TODO Excepcion aquí
-                        print("No es de tipo NUMBER")
+                        print("No es de tipo NUMBER/CONSTANT/NAME")
                         raise InvalidSyntaxException
                 else:
-                    #TODO Excepcion aquí
                     print("No es de tipo ITEM")
                     raise InvalidSyntaxException
             elif token_actual.type == "CANPICK":
                 token_es_tipo("CANPICK")
                 if token_actual.type == "ITEM":
                     token_es_tipo("ITEM")
-                    #TODO El token puede ser variable, la variable debe estar declarada
                     if token_actual.type == "NUMBER":
                         token_es_tipo("NUMBER")
+                    elif token_actual.type == "NAME":
+                        if token_actual.value in lista_variables:
+                            token_es_tipo("NAME")
+                        else:
+                            raise InvalidSyntaxException
+                    elif token_actual.type == "CONSTANT":
+                        token_es_tipo("CONSTANT")
                     else:
-                        #TODO Excepcion aquí
-                        print("No es de tipo NUMBER")
+                        print("No es de tipo NUMBER/CONSTANT/NAME")
                         raise InvalidSyntaxException
                 else:
-                    #TODO Excepcon aqui
                     print("No es de tipo ITEM")
                     raise InvalidSyntaxException
             elif token_actual.type == "CANMOVE":
@@ -567,14 +588,22 @@ def verificarIf():
                     token_es_tipo("ORIENTATION")
                     verificarBloque()
                 else:
-                    #TODO Excepcion aquí
                     print("No es de tipo ORIENTATION")
                     raise InvalidSyntaxException
             elif token_actual.type == "ISZERO":
                 token_es_tipo("ISZERO")
-                #TODO El token puede ser variable, la variable debe estar declarada
                 if token_actual.type == "NUMBER":
                     token_es_tipo("NUMBER")
+                elif token_actual.type == "NAME":
+                    if token_actual.value in lista_variables:
+                        token_es_tipo("NAME")
+                    else:
+                        raise InvalidSyntaxException
+                elif token_actual.type == "CONSTANT":
+                    token_es_tipo("CONSTANT")
+                else:
+                    print("No es de tipo NUMBER/CONSTANT/NAME")
+                    raise InvalidSyntaxException
             elif token_actual.type == "NOT":
                 token_es_tipo("NOT")
                 #Revisar condición
@@ -592,9 +621,6 @@ def verificarIf():
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
-
-def verificarNot():
-    pass
 
 def verificar_defun(funcion=None):
     global diccionario_funciones
@@ -642,6 +668,184 @@ def verificarBloque(funcion=None):
     except InvalidSyntaxException:
         print("No")
 
+def verificarLoop():
+    global token_actual
+    global stack
+    try:
+        while len(stack) > 0 and token_actual.type != "EOF":
+            if token_actual.type == "LPAREN":
+                token_es_tipo("LPAREN")
+                stack.append("LPAREN")
+                verificarLoop()
+            elif token_actual.type == "RPAREN":
+                if len(stack) == 0:
+                    print("No hay parentesis iz para emparejar el parentesis der")
+                    raise InvalidSyntaxException
+                else:
+                    stack.pop()
+                token_es_tipo("RPAREN")
+            elif token_actual.type == "FACING":
+                token_es_tipo("FACING")
+                if token_actual.type == "ORIENTATION":
+                    token_es_tipo("ORIENTATION")
+                    verificarBloque()
+                else:
+                    print("No es de tipo ORIENTATION")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "BLOCKED":
+                token_es_tipo("BLOCKED")
+                verificarLoop()
+            elif token_actual.type == "CANPUT":
+                token_es_tipo("CANPUT")
+                if token_actual.type == "ITEM":
+                    token_es_tipo("ITEM")
+                    if token_actual.type == "NUMBER":
+                        token_es_tipo("NUMBER")
+                    elif token_actual.type == "NAME":
+                        if token_actual.value in lista_variables:
+                            token_es_tipo("NAME")
+                        else:
+                            raise InvalidSyntaxException
+                    elif token_actual.type == "CONSTANT":
+                        token_es_tipo("CONSTANT")
+                    else:
+                        print("No es de tipo NUMBER/CONSTANT/NAME")
+                        raise InvalidSyntaxException
+                else:
+                    print("No es de tipo ITEM")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "CANPICK":
+                token_es_tipo("CANPICK")
+                if token_actual.type == "ITEM":
+                    token_es_tipo("ITEM")
+                    if token_actual.type == "NUMBER":
+                        token_es_tipo("NUMBER")
+                    elif token_actual.type == "NAME":
+                        if token_actual.value in lista_variables:
+                            token_es_tipo("NAME")
+                        else:
+                            raise InvalidSyntaxException
+                    elif token_actual.type == "CONSTANT":
+                        token_es_tipo("CONSTANT")
+                    else:
+                        print("No es de tipo NUMBER/CONSTANT/NAME")
+                        raise InvalidSyntaxException
+                else:
+                    print("No es de tipo ITEM")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "CANMOVE":
+                token_es_tipo("CANMOVE")
+                if token_actual.type == "ORIENTATION":
+                    token_es_tipo("ORIENTATION")
+                    verificarBloque()
+                else:
+                    print("No es de tipo ORIENTATION")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "ISZERO":
+                token_es_tipo("ISZERO")
+                if token_actual.type == "NUMBER":
+                    token_es_tipo("NUMBER")
+                elif token_actual.type == "NAME":
+                    if token_actual.value in lista_variables:
+                        token_es_tipo("NAME")
+                    else:
+                        raise InvalidSyntaxException
+                elif token_actual.type == "CONSTANT":
+                    token_es_tipo("CONSTANT")
+                else:
+                    print("No es de tipo NUMBER/CONSTANT/NAME")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "NOT":
+                token_es_tipo("NOT")
+                #Revisar condición
+                if token_actual.type == "LPAREN":
+                    verificarLoop()
+                else:
+                    print("La condición no es válida")
+                    raise InvalidSyntaxException
+            else:
+                statement()
+    except:
+        print("No")
+        sys.exit(1)
+
+def verificarRepeat():
+    global token_actual
+    global stack
+    try:
+        while len(stack) > 0 and token_actual.type != "EOF":
+            if token_actual.type == "LPAREN":
+                token_es_tipo("LPAREN")
+                stack.append("LPAREN")
+                verificarRepeat()
+            elif token_actual.type == "RPAREN":
+                if len(stack) == 0:
+                    print("No hay parentesis iz para emparejar el parentesis der")
+                    raise InvalidSyntaxException
+                else:
+                    stack.pop()
+                token_es_tipo("RPAREN")
+            elif token_actual.type == "NUMBER":
+                token_es_tipo("NUMBER")
+                if token_actual.type != "LPAREN":
+                    raise InvalidSyntaxException
+            elif token_actual.type == "NAME":
+                if token_actual.value in lista_variables:
+                    token_es_tipo("NAME")
+                    if token_actual.type != "LPAREN":
+                        raise InvalidSyntaxException
+                else:
+                    raise InvalidSyntaxException
+            elif token_actual.type == "CONSTANT":
+                token_es_tipo("CONSTANT")
+                if token_actual.type != "LPAREN":
+                    raise InvalidSyntaxException
+            else:
+                statement()
+    except:
+        print("No")
+        sys.exit(1)
+
+def verificarCallFun():
+    global diccionario_funciones
+    global lista_variables
+    contadorParametros = 0
+    funName = ""
+    try:
+        funName = token_actual.value
+        token_es_tipo("NAME")
+        while token_actual.type != "RPAREN":
+            if token_actual.type == "NUMBER":
+                token_es_tipo("NUMBER")
+                contadorParametros += 1
+            elif token_actual.type == "NAME":
+                if token_actual.value in lista_variables:
+                    token_es_tipo("NAME")
+                    contadorParametros +=1
+                else:
+                    print("Variable no definida")
+                    raise InvalidSyntaxException
+            elif token_actual.type == "CONSTANT":
+                token_es_tipo("CONSTANT")
+                contadorParametros += 1
+            elif token_actual.type == "ITEM":
+                token_es_tipo("ITEM")
+                contadorParametros += 1
+            elif token_actual.type == "DIRECTION":
+                token_es_tipo("DIRECTION")
+                contadorParametros += 1
+            elif token_actual.type == "ORIENTATION":
+                token_es_tipo("ORIENTATION")
+                contadorParametros += 1
+            else:
+                raise InvalidSyntaxException
+
+        #Revisar cantidad de parametros
+        if contadorParametros != len(diccionario_funciones[funName]):
+            raise InvalidSyntaxException        
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
 
 
 parse()
