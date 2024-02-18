@@ -306,7 +306,7 @@ def statement(funcion=None):
             token_es_tipo("IF")
             if token_actual.type != "LPAREN":
                     raise InvalidSyntaxException
-            verificarIf()
+            verificarIf(funcion)
         elif token_actual.type == "DEFUN":
             print("defun statement")
             verificar_defun(funcion)
@@ -637,8 +637,7 @@ def verificarIf(funcion=None):
                     raise InvalidSyntaxException
             elif token_actual.type == "BLOCKED":
                 token_es_tipo("BLOCKED")
-                verificarIf(funcion)
-                verificarBloque()
+                verificarBloque(funcion)
             elif token_actual.type == "CANPUT":
                 token_es_tipo("CANPUT")
                 if token_actual.type == "ITEM":
