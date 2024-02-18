@@ -1,6 +1,5 @@
 import ply.lex as lex
 import sys
-import os
 
 # Se definen los tokens
 tokens = [
@@ -182,45 +181,7 @@ data = ""
 for linea in file:
     data += linea
 file.close()
-# data = '''
-# ( defvar rotate 3)
 
-
-
-
-# ( if (can-move? :north ) ( move-dir 1 :front ) ( null ) )
-
-# (
-# ( if (not (blocked?)) ( move 1) ( null) )
-# (turn :left )
-# )
-
-# ( defvar one 1)
-
-# ( defun foo ( c p )
-# 	(put :chips c )
-# 	(put :balloons p )
-# 	( move rotate ) )
-# ( foo 1 3)
-
-# ( defun goend ()
-# 	( if (not (blocked?) )
-# 	(( move one )
-#  	( goend ) )
-#  	( null ) ) )
-
-# ( defun fill ()
-# ( repeat Spaces ( if (not ( isZero? myChips ) ) (put :chips 1) ) )
-# )
-
-# ( defun pickAllB ()
-#  (pick :balloons 5 )
-# )
-
-
-# ( run-dirs :left :front :left :back :right )
-
-# '''
 # Se pasa todo el texto del programa a minúsculas
 data = data.lower()
 
