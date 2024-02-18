@@ -3,8 +3,8 @@
 
 
 
-( if (can-move? :north ) ( move-dir 1 :north ) ( null ) )
- 
+( if (can-move? :north ) ( move-dir 1 :front ) ( null ) )
+
 (
 ( if (not (blocked?)) ( move 1) ( null) )
 (turn :left )
@@ -17,7 +17,7 @@
 	(put :balloons p )
 	( move rotate ) )
 ( foo 1 3)
- 
+
 ( defun goend ()
 	( if (not (blocked?) )
 	(( move one )
@@ -29,8 +29,8 @@
 )
 
 ( defun pickAllB ()
- (pick :balloons balloonsHere )
+ (pick :balloons 5 )
 )
 
 
-( run-dirs :left :up :left :down :right )
+( run-dirs :left :front :left :back :right )
