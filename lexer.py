@@ -306,10 +306,6 @@ def statement():
             token_es_tipo("IF")
             verificarIf()
             pass
-        elif token_actual.type == "DEFVAR":
-            print("defvar statement")
-            token_es_tipo("DEFVAR")
-            pass
         else:
             print("otro")
             token_actual = lexer.token()
