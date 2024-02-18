@@ -234,7 +234,7 @@ def parse():
     global stack
     token_actual = lexer.token()
     try:
-        while token_actual != "EOF":
+        while token_actual.type != "EOF":
             statement()
         if len(stack) > 0:
             print("Parentesis impares")
@@ -294,7 +294,7 @@ def token_es_tipo(token_type):
 def verificarIf():
     global token_actual
     global stack
-    condiciones = ["FACING", "BLOCKED", "CANPUT", "CANPICK", "CANMOVE", "ISZERO"]
+    #condiciones = ["FACING", "BLOCKED", "CANPUT", "CANPICK", "CANMOVE", "ISZERO"]
     try:    
         while len(stack) > 0:
             if token_actual.type == "LPAREN":
@@ -371,13 +371,16 @@ def verificarIf():
                 token_es_tipo("NOT")
                 #Revisar condición
                 if token_actual.type == "LPAREN":
-                    token_es_tipo("LPAREN")
-                    if token_actual.type in condiciones:
-                        token_es_tipo(token_actual.type)
-                    if token_actual.type == "RPAREN"
+                    # token_es_tipo("LPAREN")
+                    # if token_actual.type in condiciones:
+                    #     token_es_tipo(token_actual.type)
+                    # if token_actual.type == "RPAREN"
+                    verificarIf()
                 else:
                     print("La condición no es válida")
                     raise InvalidSyntaxException
+            else:
+                statement()
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
@@ -402,7 +405,7 @@ def verificarBloque():
                     stack.pop()
                 token_es_tipo("RPAREN")
             else:
-                token_actual = lexer.token()
+                statement()
     except InvalidSyntaxException:
         print("No")
             
@@ -410,6 +413,7 @@ def verificarBloque():
 
 
 parse()
+print("Si")
 
 
     
