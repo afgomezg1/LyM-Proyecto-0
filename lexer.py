@@ -158,7 +158,7 @@ def t_NUMBER(t):
     return t
 
 def t_NAME(t):
-    r'[a-z][a-z0-9]*' #TODO: Cambiar la expresión regular a lo que dijo la monitora
+    r'[a-z][a-z0-9]*'
     return t
 
 # Define EOF token rule
@@ -170,7 +170,7 @@ def t_eof(t):
 # Error handling rule
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
-    t.lexer.skip(1)
+    t.lexer.skip(1)#TODO: Toca cambiar esto para matarlo si hay un ilegal character?
 
 # Build the lexer
 lexer = lex.lex()
@@ -230,6 +230,7 @@ stack = []
 
 token_actual = None
 
+diccionario_funciones = {}
 lista_variables = []
 
 def parse():
@@ -247,7 +248,7 @@ def parse():
         print("No")
         sys.exit(1)
 
-def statement():
+def statement(funcion=None):
     global token_actual
     global stack
 
@@ -285,7 +286,7 @@ def statement():
             verificar_face()
         elif token_actual.type == "PUT":
             print("put statement")
-            verificar_put()
+            verificar_put(funcion)
         elif token_actual.type == "PICK":
             print("pick statement")
             verificar_pick()
@@ -305,7 +306,9 @@ def statement():
             print("if statement")
             token_es_tipo("IF")
             verificarIf()
-            pass
+        elif token_actual.type == "DEFUN":
+            print("defun statement")
+            verificar_defun(funcion)
         else:
             print("otro")
             token_actual = lexer.token()
@@ -324,7 +327,7 @@ def token_es_tipo(token_type):
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
-#TODO: Toca modificar los condicionales con tipo "NAME" para tener en cuenta las declaraciones de funciones
+
 def verificar_defvar():
     global lista_variables
     try:
@@ -341,7 +344,7 @@ def verificar_defvar():
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
-
+#TODO: A una variable se le puede asignar un parámetro si el assign está dentro de una definición de función; modificar para que n pueda ser parámetro de una función
 def verificar_assign():
     try:
         token_es_tipo("ASSIGN")
@@ -356,32 +359,40 @@ def verificar_assign():
         print("No")
         sys.exit(1)
 
-def verificar_move():
+def verificar_move(funcion=None):
     try:
         token_es_tipo("MOVE")
         tipo_n = token_actual.type
         if not (tipo_n == "NUMBER" or tipo_n == "CONSTANT" or tipo_n == "NAME"):
             raise InvalidSyntaxException
-        if (tipo_n == "NAME") and (token_actual.value not in lista_variables):
+        if (tipo_n == "NAME") and (token_actual.value not in lista_variables) and (funcion is None):
             raise InvalidSyntaxException
+        if (funcion is not None):
+            if token_actual.value not in funcion:
+                raise InvalidSyntaxException
         token_es_tipo(tipo_n)
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
 
-def verificar_skip():
+def verificar_skip(funcion=None):
     try:
         token_es_tipo("SKIP")
         tipo_n = token_actual.type
         if not (tipo_n == "NUMBER" or tipo_n == "CONSTANT" or tipo_n == "NAME"):
             raise InvalidSyntaxException
-        if (tipo_n == "NAME") and (token_actual.value not in lista_variables):
+        if (tipo_n == "NAME") and (token_actual.value not in lista_variables) and (funcion is None):
             raise InvalidSyntaxException
+        if (funcion is not None):
+            if token_actual.value not in funcion:
+                raise InvalidSyntaxException
         token_es_tipo(tipo_n)
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
-
+#TODO: A un turn se le puede meter un parámetro si esta dentro de la definición de una función y el parámetro
+# es de tipo dirección, pero no se puede saber el tipo del parámetro de antemano
+# aunque se puede cambiar; modificar para que n pueda ser parámetro de una función
 def verificar_turn():
     try:
         token_es_tipo("TURN")
@@ -400,44 +411,51 @@ def verificar_face():
         print("No")
         sys.exit(1)
 
-def verificar_put():
+def verificar_put(funcion=None):
     try:
         token_es_tipo("PUT")
         token_es_tipo("ITEM")
         tipo_n = token_actual.type
         if not (tipo_n == "NUMBER" or tipo_n == "NAME"):
-            print("if1")
             raise InvalidSyntaxException
-        # if (tipo_n == "NAME") and (token_actual.value not in lista_variables): #TODO: Esto es lo mismo que lo de que se necesita tener en cuenta la declaración de funciones
-            print("if2")
+        if (tipo_n == "NAME") and (token_actual.value not in lista_variables) and (funcion is None):
             raise InvalidSyntaxException
+        if (funcion is not None):
+            if token_actual.value not in funcion:
+                raise InvalidSyntaxException
         token_es_tipo(tipo_n)
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
 
-def verificar_pick():
+def verificar_pick(funcion=None):
     try:
         token_es_tipo("PICK")
         token_es_tipo("ITEM")
         tipo_n = token_actual.type
         # if not (tipo_n == "NUMBER" or tipo_n == "NAME"):
             # raise InvalidSyntaxException
-        # if (tipo_n == "NAME") and (token_actual.value not in lista_variables): #TODO: Pick es diferente en el ejemplo (se preguntó a la monitora sobre la inconsistencia)
-            # raise InvalidSyntaxException
+        # if (tipo_n == "NAME") and (token_actual.value not in lista_variables) and (funcion is None): #TODO: Pick es diferente en el ejemplo (se preguntó a la monitora sobre la inconsistencia)
+        #     raise InvalidSyntaxException
+        # if (funcion is not None):
+        #     if token_actual.value not in funcion:
+        #         raise InvalidSyntaxException
         token_es_tipo(tipo_n)
     except InvalidSyntaxException:
         print("No")
         sys.exit(1)
 
-def verificar_movedir():
+def verificar_movedir(funcion=None):
     try:
         token_es_tipo("MOVEDIR")
         tipo_n = token_actual.type
         if not (tipo_n == "NUMBER" or tipo_n == "NAME"):
             raise InvalidSyntaxException
-        if (tipo_n == "NAME") and (token_actual.value not in lista_variables):
+        if (tipo_n == "NAME") and (token_actual.value not in lista_variables) and (funcion is None):
             raise InvalidSyntaxException
+        if (funcion is not None):
+            if token_actual.value not in funcion:
+                raise InvalidSyntaxException
         token_es_tipo(tipo_n)
         if token_actual.value not in [":front", ":right", ":left", ":back"]:
             raise InvalidSyntaxException
@@ -457,14 +475,17 @@ def verificar_rundirs():
         print("No")
         sys.exit(1)
 
-def verificar_moveface():
+def verificar_moveface(funcion=None):
     try:
         token_es_tipo("MOVEFACE")
         tipo_n = token_actual.type
         if not (tipo_n == "NUMBER" or tipo_n == "NAME"):
             raise InvalidSyntaxException
-        if (tipo_n == "NAME") and (token_actual.value not in lista_variables):
+        if (tipo_n == "NAME") and (token_actual.value not in lista_variables) and (funcion is None):
             raise InvalidSyntaxException
+        if (funcion is not None):
+            if token_actual.value not in funcion:
+                raise InvalidSyntaxException
         token_es_tipo(tipo_n)
         token_es_tipo("ORIENTATION")
     except InvalidSyntaxException:
@@ -575,7 +596,32 @@ def verificarIf():
 def verificarNot():
     pass
 
-def verificarBloque():
+def verificar_defun(funcion=None):
+    global diccionario_funciones
+    try:
+        token_es_tipo("DEFUN")
+        if token_actual.type != "NAME":
+            raise InvalidSyntaxException
+        nombre_funcion = token_actual.value
+        if nombre_funcion in diccionario_funciones:
+            raise InvalidSyntaxException
+        token_es_tipo("NAME")
+        token_es_tipo("LPAREN")
+        if token_actual.type != "NAME" and token_actual.type != "RPAREN":
+            raise InvalidSyntaxException
+        lista_parametros = []
+        while token_actual.type == "NAME":
+            lista_parametros.append(token_actual.value)
+            token_es_tipo("NAME")
+        token_es_tipo("RPAREN")
+        diccionario_funciones[nombre_funcion] = lista_parametros
+        funcion=lista_parametros
+        verificarBloque(funcion=funcion)
+    except InvalidSyntaxException:
+        print("No")
+        sys.exit(1)
+
+def verificarBloque(funcion=None):
     global token_actual
     global stack
     try:
@@ -583,7 +629,7 @@ def verificarBloque():
             if token_actual.type == "LPAREN":
                 token_es_tipo("LPAREN")
                 stack.append("LPAREN")
-                verificarBloque()
+                verificarBloque(funcion=funcion)
             elif token_actual.type == "RPAREN":
                 if len(stack) == 0:
                     print("No hay parentesis iz para emparejar el parentesis der")
@@ -592,13 +638,12 @@ def verificarBloque():
                     stack.pop()
                 token_es_tipo("RPAREN")
             else:
-                statement()
+                statement(funcion=funcion)
     except InvalidSyntaxException:
         print("No")
 
 
 
-print("Inicia el parseo")
 parse()
 print("Si")
 
