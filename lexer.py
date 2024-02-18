@@ -1,5 +1,6 @@
 import ply.lex as lex
 import sys
+import os
 
 # Se definen los tokens
 tokens = [
@@ -175,45 +176,51 @@ def t_error(t):
 lexer = lex.lex()
 
 # Se define el texto del programa que se va a analizar
-data = '''
-( defvar rotate 3)
+directorioTxt = "ProgramaPruebaEnunciado.txt"
+file = open(directorioTxt, "r")
+data = ""
+for linea in file:
+    data += linea
+file.close()
+# data = '''
+# ( defvar rotate 3)
 
 
 
 
-( if (can-move? :north ) ( move-dir 1 :front ) ( null ) )
+# ( if (can-move? :north ) ( move-dir 1 :front ) ( null ) )
 
-(
-( if (not (blocked?)) ( move 1) ( null) )
-(turn :left )
-)
+# (
+# ( if (not (blocked?)) ( move 1) ( null) )
+# (turn :left )
+# )
 
-( defvar one 1)
+# ( defvar one 1)
 
-( defun foo ( c p )
-	(put :chips c )
-	(put :balloons p )
-	( move rotate ) )
-( foo 1 3)
+# ( defun foo ( c p )
+# 	(put :chips c )
+# 	(put :balloons p )
+# 	( move rotate ) )
+# ( foo 1 3)
 
-( defun goend ()
-	( if (not (blocked?) )
-	(( move one )
- 	( goend ) )
- 	( null ) ) )
+# ( defun goend ()
+# 	( if (not (blocked?) )
+# 	(( move one )
+#  	( goend ) )
+#  	( null ) ) )
 
-( defun fill ()
-( repeat Spaces ( if (not ( isZero? myChips ) ) (put :chips 1) ) )
-)
+# ( defun fill ()
+# ( repeat Spaces ( if (not ( isZero? myChips ) ) (put :chips 1) ) )
+# )
 
-( defun pickAllB ()
- (pick :balloons 5 )
-)
+# ( defun pickAllB ()
+#  (pick :balloons 5 )
+# )
 
 
-( run-dirs :left :front :left :back :right )
+# ( run-dirs :left :front :left :back :right )
 
-'''
+# '''
 # Se pasa todo el texto del programa a minúsculas
 data = data.lower()
 
@@ -702,10 +709,6 @@ def verificarIf(funcion=None):
                 token_es_tipo("NOT")
                 #Revisar condición
                 if token_actual.type == "LPAREN":
-                    # token_es_tipo("LPAREN")
-                    # if token_actual.type in condiciones:
-                    #     token_es_tipo(token_actual.type)
-                    # if token_actual.type == "RPAREN"
                     verificarIf(funcion)
                 else:
                     print("La condición no es válida")
